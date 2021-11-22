@@ -22,83 +22,94 @@ contract MyEpicNFT is ERC721URIStorage {
 
     string[] thirdWords = ["Mercury" ,"Venus" ,"Earth" ,"Mars", "Jupiter" ,"Saturn" ,"Uranus" ,"Neptune"];
 
-  // We need to pass the name of our NFTs token and it's symbol.
-  constructor() ERC721 ("SquareNFT", "SQUARE") {
-    console.log("This is my NFT contract. Woah!");
-  }
+    event NewEpicNFTMinted(address sender, uint256 tokenId);
 
-  // Create a function to randomly pick a word from each array.
-  function pickRandomFirstWord(uint256 tokenId) public view returns (string memory) {
-    // Seed the random generator
-    uint256 rand = random(string(abi.encodePacked("FIRST_WORD", Strings.toString(tokenId))));
-    // Squash the # between 0 and the length of the array to avoid going out of bounds.
-    rand = rand % firstWords.length;
-    return firstWords[rand];
-  }
-  function pickRandomSecondWord(uint256 tokenId) public view returns (string memory) {
-    // Seed the random generator
-    uint256 rand = random(string(abi.encodePacked("SECOND_WORD", Strings.toString(tokenId))));
-    // Squash the # between 0 and the length of the array to avoid going out of bounds.
-    rand = rand % secondWords.length;
-    return secondWords[rand];
-  }
-  function pickRandomThirdWord(uint256 tokenId) public view returns (string memory) {
-    // Seed the random generator. 
-    uint256 rand = random(string(abi.encodePacked("THIRD_WORD", Strings.toString(tokenId))));
-    // Squash the # between 0 and the length of the array to avoid going out of bounds.
-    rand = rand % thirdWords.length;
-    return thirdWords[rand];
-  }
+    // We need to pass the name of our NFTs token and it's symbol.
+    constructor() ERC721 ("SquareNFT", "SQUARE") {
+        console.log("This is my NFT contract. Woah!");
+    }
 
-  function random(string memory input) internal pure returns (uint256) {
-      return uint256(keccak256(abi.encodePacked(input)));
-  }
+    // Create a function to randomly pick a word from each array.
+    function pickRandomFirstWord(uint256 tokenId) public view returns (string memory) {
+        // Seed the random generator
+        uint256 rand = random(string(abi.encodePacked("FIRST_WORD", Strings.toString(tokenId))));
+        // Squash the # between 0 and the length of the array to avoid going out of bounds.
+        rand = rand % firstWords.length;
+        return firstWords[rand];
+    }
+    function pickRandomSecondWord(uint256 tokenId) public view returns (string memory) {
+        // Seed the random generator
+        uint256 rand = random(string(abi.encodePacked("SECOND_WORD", Strings.toString(tokenId))));
+        // Squash the # between 0 and the length of the array to avoid going out of bounds.
+        rand = rand % secondWords.length;
+        return secondWords[rand];
+    }
+    function pickRandomThirdWord(uint256 tokenId) public view returns (string memory) {
+        // Seed the random generator. 
+        uint256 rand = random(string(abi.encodePacked("THIRD_WORD", Strings.toString(tokenId))));
+        // Squash the # between 0 and the length of the array to avoid going out of bounds.
+        rand = rand % thirdWords.length;
+        return thirdWords[rand];
+    }
 
-  // A function our user will hit to get their NFT.
-  function makeAnEpicNFT() public {
-     // Get the current tokenId, this starts at 0.
-    uint256 newItemId = _tokenIds.current();
+    function random(string memory input) internal pure returns (uint256) {
+        return uint256(keccak256(abi.encodePacked(input)));
+    }
 
-    string memory firstWord = pickRandomFirstWord(newItemId);
-    string memory secondWord = pickRandomSecondWord(newItemId);
-    string memory thirdWord = pickRandomThirdWord(newItemId);
-    string memory combinedWord = string(abi.encodePacked(firstWord, secondWord, thirdWord));
+    // A function our user will hit to get their NFT.
+    function makeAnEpicNFT() public {
+        // Get the current tokenId, this starts at 0.
+        uint256 newItemId = _tokenIds.current();
 
-    string memory finalSvg = string(abi.encodePacked(baseSvg, combinedWord, '</text></svg>'));
+        //Limit the number of NFT
+        require(newItemId <= 50, 'Max count reached');
 
-    // Get all the JSON metadata in place and base64 encode it.
-    string memory json = Base64.encode(
-        bytes(
-            string(
-                abi.encodePacked(
-                    '{"name": "', combinedWord, '", "description": "A highly acclaimed collection of squares.", "image": "data:image/svg+xml;base64,',
-                    Base64.encode(bytes(finalSvg)),
-                    '"}'
+        string memory firstWord = pickRandomFirstWord(newItemId);
+        string memory secondWord = pickRandomSecondWord(newItemId);
+        string memory thirdWord = pickRandomThirdWord(newItemId);
+        string memory combinedWord = string(abi.encodePacked(firstWord, secondWord, thirdWord));
+
+        string memory finalSvg = string(abi.encodePacked(baseSvg, combinedWord, '</text></svg>'));
+
+        // Get all the JSON metadata in place and base64 encode it.
+        string memory json = Base64.encode(
+            bytes(
+                string(
+                    abi.encodePacked(
+                        '{"name": "', combinedWord, '", "description": "A highly acclaimed collection of squares.", "image": "data:image/svg+xml;base64,',
+                        Base64.encode(bytes(finalSvg)),
+                        '"}'
+                    )
                 )
             )
-        )
-    );
+        );
 
-    // Prepend data:application/json;base64, to our data.
-    string memory finalTokenUri = string(
-        abi.encodePacked("data:application/json;base64,", json)
-    );
+        // Prepend data:application/json;base64, to our data.
+        string memory finalTokenUri = string(
+            abi.encodePacked("data:application/json;base64,", json)
+        );
 
-    console.log("\n--------------------");
-    console.log(string(
-        abi.encodePacked(
-            "https://nftpreview.0xdev.codes/?code=",
-            finalTokenUri
-        )
-    ));
-    console.log("--------------------\n");
+        console.log("\n--------------------");
+        console.log(string(
+            abi.encodePacked(
+                "https://nftpreview.0xdev.codes/?code=",
+                finalTokenUri
+            )
+        ));
+        console.log("--------------------\n");
 
-    _safeMint(msg.sender, newItemId);
-    
-    // Update your URI!!!
-    _setTokenURI(newItemId, finalTokenUri);
-  
-    _tokenIds.increment();
-    console.log("An NFT w/ ID %s has been minted to %s", newItemId, msg.sender);
-  }
+        _safeMint(msg.sender, newItemId);
+        
+        // Update your URI!!!
+        _setTokenURI(newItemId, finalTokenUri);
+
+        _tokenIds.increment();
+        console.log("An NFT w/ ID %s has been minted to %s", newItemId, msg.sender);
+        emit NewEpicNFTMinted(msg.sender, newItemId);
+    }
+
+    function getTotalNFTsMinted() public view returns(uint256){
+        uint256 count = _tokenIds.current();
+        return count;
+    }
 }
